@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+.ipynb_checkpoints/
+
+# 생성물은 재현 가능하므로 커밋에서 제외하고 싶다면 아래 주석 해제
+# data/*.csv
+# images/*.png
+# stats.json
