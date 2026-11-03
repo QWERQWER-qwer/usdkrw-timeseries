@@ -108,6 +108,21 @@ up = r.idxmax(); dn = r.idxmin()
 stats["max_daily_up"] = {"date": str(up.date()), "pct": round(float(r.max()) * 100, 2), "level": round(float(close.loc[up]), 2)}
 stats["max_daily_down"] = {"date": str(dn.date()), "pct": round(float(r.min()) * 100, 2), "level": round(float(close.loc[dn]), 2)}
 
+# 이상치 식별 규칙(명시적): |일간 변화율| >= 2.0% 인 날을 '급변일'로 태그.
+# 근거: 일간 변화율 표준편차가 약 0.5% 수준이라, 2%는 약 4σ에 해당하는 드문 움직임이다.
+# (오류가 아니라 실제 이벤트로 판단해 '제거'가 아니라 '태그'만 한다.)
+OUTLIER_TH = 0.02
+out = df.loc[df["ret"].abs() >= OUTLIER_TH, ["Close", "ret"]].copy()
+out = out.reindex(out["ret"].abs().sort_values(ascending=False).index)
+stats["outlier_rule"] = f"|일간 변화율| >= {OUTLIER_TH*100:.0f}%"
+stats["outlier_count"] = int(len(out))
+stats["outliers_tagged"] = [
+    {"date": str(d.date()), "pct": round(float(row["ret"]) * 100, 2),
+     "level": round(float(row["Close"]), 2),
+     "dir": "원화 약세" if row["ret"] > 0 else "원화 강세"}
+    for d, row in out.iterrows()
+]
+
 # 변동성: 최고 시점
 v = df["vol20"].dropna()
 stats["vol_mean_pct"] = round(float(v.mean()) * 100, 2)
